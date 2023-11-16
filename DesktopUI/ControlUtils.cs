@@ -26,9 +26,9 @@ internal static class ControlUtils
         pictureBox.Invoke(() => pictureBox.Image = Image.FromFile($"./Assets/{dir}.png"));
     }
 
-    public static void InvokeSetProgress(this Label label, int currentTact, int tacts)
+    public static void InvokeSetText(this Label label, string progressString)
     {
-        label.Invoke(() => label.Text = $"{currentTact}/{tacts}");
+        label.Invoke(() => label.Text = progressString);
     }
 
 }

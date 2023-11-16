@@ -7,7 +7,7 @@ namespace DesktopUI;
 
 public partial class MainForm : Form
 {
-    private readonly GameState _state = new();
+    private readonly GameState _gameState = new();
     private readonly Random _random = new();
     private const int _delay = 1000;
 
@@ -24,6 +24,12 @@ public partial class MainForm : Form
 
     #region Helpers
 
+    private void Output()
+    {
+        DirectionPictureBox.InvokeSetImage(_gameState.Direction);
+        ProgressLabel.InvokeSetText(_gameState.ProgressString);
+    }
+
     private void ListPorts()
     {
         var ports = SerialPort.GetPortNames();
@@ -35,32 +41,50 @@ public partial class MainForm : Form
 
     private void StartSlideShow()
     {
-        DirectionPictureBox.InvokeSetImage(Direction.Error);
+        _gameState.ResetProgress();
+        Output();
 
-        var tacts = _state.Sequence.Count;
-        for (int i = 0; i < tacts; i++)
+        foreach (var dir in _gameState.Sequence)
         {
-            DirectionPictureBox.InvokeSetImage(_state.Sequence[i]);
-            ProgressLabel.InvokeSetProgress(i + 1, tacts);
+            _gameState.CorrectGuesses++;
+            _gameState.Direction = dir;
+            Output();
             Thread.Sleep(_delay);
         }
 
-        DirectionPictureBox.InvokeSetImage(Direction.Error);
+        _gameState.ResetProgress();
+        Output();
+
     }
 
-    private bool IsJoystickEvent()
+    private void ProcessMessage(SerialPort port)
     {
-        if (_state.InputType == InputType.Joystick)
+        InvokeSetEnable(false, StartButton, MaxTactsEdit);
+
+        var message = port.ReadLine();
+        (_gameState.Direction, _gameState.InputType) = ParseMessage(message);
+
+        // Process joystick sensitivity
+        if (_gameState.InputType == InputType.Joystick && !_gameState.IsJoystickEvent())
+            _gameState.ResetJoystickData();
+
+        if (_gameState.IsFinished)
         {
-            if (_state.PrevDirection != _state.Direction)
-            {
-                _state.PrevDirection = _state.Direction;
-                _state.JoystickRepetitions = 0;
-                return false;
-            }
-            else _state.JoystickRepetitions++;
+            var caption = _gameState.IsWon ? "Success" : "Failure";
+            var text = _gameState.IsWon ? $"Won: {_gameState.ProgressString}!!!" : "Try again!";
+
+            MessageBox.Show(text, caption);
+
+            _gameState.FullReset();
+            Output();
+
+            InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
         }
-        return _state.JoystickRepetitions < 5;
+        else
+        {
+            _gameState.CorrectGuesses++;
+            Output();
+        }
     }
 
     #endregion
@@ -69,105 +93,52 @@ public partial class MainForm : Form
 
     private void StartButton_Click(object sender, EventArgs e)
     {
-        SetEnable(false, StartButton, RepeatButton, MaxTactsEdit);
-        _state.FullReset();
+        SetEnable(false, StartButton, MaxTactsEdit);
+        _gameState.FullReset();
 
         Task.Factory.StartNew(() =>
         {
             var sequenceLength = (int)MaxTactsEdit.Value;
             var max = Enum.GetValues(typeof(Direction)).Length - 1; // -1 for unknown
             for (int i = 0; i < sequenceLength; i++)
-                _state.Sequence.Add((Direction)_random.Next(0, max));
+                _gameState.Sequence.Add((Direction)_random.Next(0, max));
 
             StartSlideShow();
-            ProgressLabel.InvokeSetProgress(0, sequenceLength);
-            InvokeSetEnable(true, StartButton, RepeatButton, MaxTactsEdit);
-            _state.IgnoreInput = false;
+
+            InvokeSetEnable(true, StartButton, MaxTactsEdit);
+            _gameState.IgnoreInput = false;
         });
     }
 
-    private void RepeatButton_Click(object sender, EventArgs e)
-    {
-        SetEnable(false, StartButton, RepeatButton, MaxTactsEdit);
-        _state.IgnoreInput = true;
-        _state.ResetProgress();
-
-        Task.Factory.StartNew(() =>
-        {
-            StartSlideShow();
-            ProgressLabel.InvokeSetProgress(0, _state.Sequence.Count);
-            InvokeSetEnable(true, StartButton, RepeatButton, MaxTactsEdit);
-            _state.IgnoreInput = false;
-        });
-    }
-
-    private void MaxTactsEdit_ValueChanged(object sender, EventArgs e) => _state.FullReset();
+    private void MaxTactsEdit_ValueChanged(object sender, EventArgs e) => _gameState.FullReset();
 
     private void RefreshButton_Click(object sender, EventArgs e) => ListPorts();
 
-    private void ConnectButton_Click(object sender, EventArgs e)
+    private void ConnectButton_Click(object sender, EventArgs e) => Task.Factory.StartNew(() =>
     {
-        Task.Factory.StartNew(() =>
+        InvokeSetEnable(false, PortSelector, ConnectButton, RefreshButton);
+
+        var portName = PortSelector.SelectedText;
+        var baudRate = 115200;
+
+        try
         {
-            InvokeSetEnable(false, PortSelector, ConnectButton, RefreshButton);
+            using var port = new SerialPort(portName, baudRate);
+            port.Open();
 
-            var portName = PortSelector.SelectedText;
-            var baudRate = 115200;
+            while (port.IsOpen)
+                if (!_gameState.IgnoreInput)
+                    ProcessMessage(port);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, $"Error: {ex.GetType().Name}");
+        }
 
-            try
-            {
-                using var port = new SerialPort(portName, baudRate);
-                port.Open();
+        InvokeSetEnable(false, StartButton, MaxTactsEdit);
 
-                while (port.IsOpen)
-                {
-                    if (_state.IgnoreInput) continue;
-
-                    InvokeSetEnable(false, StartButton, MaxTactsEdit);
-
-                    var message = port.ReadLine();
-                    (_state.Direction, _state.InputType) = ParseMessage(message);
-
-                    // Process joystick sensitivity
-                    if (!IsJoystickEvent()) continue;
-                    _state.ResetJoystick();
-
-                    // Process actual input sequence
-                    if (_state.Direction == _state.Sequence[_state.CorrectGuesses])
-                    {
-                        _state.CorrectGuesses++;
-                        DirectionPictureBox.InvokeSetImage(_state.Direction);
-                        ProgressLabel.InvokeSetProgress(_state.CorrectGuesses, _state.Sequence.Count);
-
-                        if (_state.CorrectGuesses == _state.Sequence.Count)
-                        {
-                            MessageBox.Show("Success", $"Won: {_state.CorrectGuesses}/{_state.Sequence.Count}!!!");
-
-                            _state.FullReset();
-                            DirectionPictureBox.InvokeSetImage(Direction.Error);
-                            ProgressLabel.InvokeSetProgress(0, _state.Sequence.Count);
-
-                            InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
-                        }
-                    }
-                    else
-                    {
-                        _state.ResetProgress();
-                        DirectionPictureBox.InvokeSetImage(Direction.Error);
-                        ProgressLabel.InvokeSetProgress(0, _state.Sequence.Count);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, $"Error: {ex.GetType().Name}");
-            }
-
-            InvokeSetEnable(false, StartButton, RepeatButton, MaxTactsEdit);
-
-            InvokeSetEnable(true, PortSelector, ConnectButton, RefreshButton);
-        });
-    }
+        InvokeSetEnable(true, PortSelector, ConnectButton, RefreshButton);
+    });
 
     #endregion
 

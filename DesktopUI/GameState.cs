@@ -1,4 +1,6 @@
-﻿namespace DesktopUI;
+﻿using static System.Windows.Forms.AxHost;
+
+namespace DesktopUI;
 
 internal class GameState
 {
@@ -13,9 +15,27 @@ internal class GameState
     public int JoystickRepetitions;
     public bool IgnoreInput;
 
+    public bool IsFinished => Direction != Sequence[CorrectGuesses] || CorrectGuesses == Sequence.Count;
+
+    public bool IsWon => CorrectGuesses == Sequence.Count && Direction == Sequence[CorrectGuesses];
+
+    public string ProgressString => $"{CorrectGuesses}/{Sequence.Count}";
+
+    public bool IsJoystickEvent()
+    {
+        if (PrevDirection != Direction)
+        {
+            PrevDirection = Direction;
+            JoystickRepetitions = 0;
+            return false;
+        }
+        else JoystickRepetitions++;
+        return JoystickRepetitions < 5;
+    }
+
     public void ResetProgress()
     {
-        ResetJoystick();
+        ResetJoystickData();
 
         Direction = Direction.Error;
         CorrectGuesses = 0;
@@ -29,7 +49,7 @@ internal class GameState
         ResetProgress();
     }
 
-    public void ResetJoystick()
+    public void ResetJoystickData()
     {
         JoystickRepetitions = 0;
         PrevDirection = Direction.Error;

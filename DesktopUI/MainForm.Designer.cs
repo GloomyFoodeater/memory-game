@@ -31,7 +31,6 @@
             DirectionPictureBox = new PictureBox();
             StartButton = new Button();
             MaxTactsEdit = new NumericUpDown();
-            RepeatButton = new Button();
             PortSelector = new ComboBox();
             label1 = new Label();
             ProgressLabel = new Label();
@@ -70,17 +69,6 @@
             MaxTactsEdit.TabIndex = 2;
             MaxTactsEdit.Value = new decimal(new int[] { 3, 0, 0, 0 });
             MaxTactsEdit.ValueChanged += MaxTactsEdit_ValueChanged;
-            // 
-            // RepeatButton
-            // 
-            RepeatButton.Enabled = false;
-            RepeatButton.Location = new Point(326, 472);
-            RepeatButton.Name = "RepeatButton";
-            RepeatButton.Size = new Size(150, 50);
-            RepeatButton.TabIndex = 3;
-            RepeatButton.Text = "Repeat";
-            RepeatButton.UseVisualStyleBackColor = true;
-            RepeatButton.Click += RepeatButton_Click;
             // 
             // PortSelector
             // 
@@ -139,7 +127,6 @@
             Controls.Add(ProgressLabel);
             Controls.Add(label1);
             Controls.Add(PortSelector);
-            Controls.Add(RepeatButton);
             Controls.Add(MaxTactsEdit);
             Controls.Add(StartButton);
             Controls.Add(DirectionPictureBox);
@@ -156,7 +143,6 @@
         private PictureBox DirectionPictureBox;
         private Button StartButton;
         private NumericUpDown MaxTactsEdit;
-        private Button RepeatButton;
         private ComboBox PortSelector;
         private Label label1;
         private Label ProgressLabel;
