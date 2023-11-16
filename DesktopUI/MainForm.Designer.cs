@@ -109,6 +109,7 @@
             // 
             // ConnectButton
             // 
+            ConnectButton.Enabled = false;
             ConnectButton.Location = new Point(553, 443);
             ConnectButton.Name = "ConnectButton";
             ConnectButton.Size = new Size(75, 23);

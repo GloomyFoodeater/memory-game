@@ -17,7 +17,7 @@ public partial class MainForm : Form
 
         // TODO: Uncomment
         // Must be unabled until connected
-        // InvokeSetEnable(false, StartButton, RepeatButton, MaxTactsEdit);
+        SetEnable(false, StartButton, MaxTactsEdit);
 
         ListPorts();
     }
@@ -33,10 +33,14 @@ public partial class MainForm : Form
     private void ListPorts()
     {
         var ports = SerialPort.GetPortNames();
+        PortSelector.Items.Clear();
         PortSelector.Items.AddRange(ports);
-        PortSelector.SelectedIndex = ports.Length > 0 ? 1 : -1;
 
-        if (!ports.Any()) ConnectButton.Enabled = false;
+        if (ports.Any())
+        {
+            PortSelector.SelectedIndex = 0;
+            ConnectButton.Enabled = true;
+        }
     }
 
     private void StartSlideShow()
@@ -55,36 +59,6 @@ public partial class MainForm : Form
         _gameState.ResetProgress();
         Output();
 
-    }
-
-    private void ProcessMessage(SerialPort port)
-    {
-        InvokeSetEnable(false, StartButton, MaxTactsEdit);
-
-        var message = port.ReadLine();
-        (_gameState.Direction, _gameState.InputType) = ParseMessage(message);
-
-        // Process joystick sensitivity
-        if (_gameState.InputType == InputType.Joystick && !_gameState.IsJoystickEvent())
-            _gameState.ResetJoystickData();
-
-        if (_gameState.IsFinished)
-        {
-            var caption = _gameState.IsWon ? "Success" : "Failure";
-            var text = _gameState.IsWon ? $"Won: {_gameState.ProgressString}!!!" : "Try again!";
-
-            MessageBox.Show(text, caption);
-
-            _gameState.FullReset();
-            Output();
-
-            InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
-        }
-        else
-        {
-            _gameState.CorrectGuesses++;
-            Output();
-        }
     }
 
     #endregion
@@ -106,7 +80,7 @@ public partial class MainForm : Form
             StartSlideShow();
 
             InvokeSetEnable(true, StartButton, MaxTactsEdit);
-            _gameState.IgnoreInput = false;
+            _gameState.IsStarted = true;
         });
     }
 
@@ -118,22 +92,64 @@ public partial class MainForm : Form
     {
         InvokeSetEnable(false, PortSelector, ConnectButton, RefreshButton);
 
-        var portName = PortSelector.SelectedText;
+        var portName = PortSelector.Invoke(() => PortSelector.Items[PortSelector.SelectedIndex].ToString());
         var baudRate = 115200;
 
         try
         {
             using var port = new SerialPort(portName, baudRate);
             port.Open();
-
+            InvokeSetEnable(true, StartButton, MaxTactsEdit);
+            bool mustDiscard = true;
             while (port.IsOpen)
-                if (!_gameState.IgnoreInput)
-                    ProcessMessage(port);
+            {
+                if (_gameState.IsStarted)
+                {
+                    if (mustDiscard)
+                    {
+                        port.DiscardOutBuffer();
+                        port.DiscardInBuffer();
+                        mustDiscard = false;
+                        InvokeSetEnable(false, StartButton, MaxTactsEdit);
+                    }
+
+                    var message = port.ReadLine();
+                    (_gameState.Direction, _gameState.InputType) = ParseMessage(message);
+
+                    if (_gameState.Direction == Direction.Error || _gameState.InputType == InputType.Error) continue;
+                    if (_gameState.InputType == InputType.Joystick) continue;
+
+                    if (_gameState.Direction == _gameState.Sequence[_gameState.CorrectGuesses])
+                    {
+                        _gameState.CorrectGuesses++;
+                        Output();
+
+                        if (_gameState.IsWon)
+                        {
+                            MessageBox.Show($"Won: {_gameState.ProgressString}!", "Success");
+                            _gameState.FullReset();
+                            Output();
+                            mustDiscard = true;
+                            InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Try again", "Failure");
+                        _gameState.FullReset();
+                        Output();
+                        mustDiscard = true;
+                        InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, $"Error: {ex.GetType().Name}");
         }
+
+        _gameState.FullReset();
 
         InvokeSetEnable(false, StartButton, MaxTactsEdit);
 

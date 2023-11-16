@@ -12,40 +12,27 @@ internal class GameState
     public Direction Direction;
     public InputType InputType;
     public Direction PrevDirection;
+    public InputType PrevInputType;
     public int JoystickRepetitions;
-    public bool IgnoreInput;
+    public bool IsStarted;
 
-    public bool IsFinished => Direction != Sequence[CorrectGuesses] || CorrectGuesses == Sequence.Count;
-
-    public bool IsWon => CorrectGuesses == Sequence.Count && Direction == Sequence[CorrectGuesses];
+    public bool IsWon => CorrectGuesses == Sequence.Count;
 
     public string ProgressString => $"{CorrectGuesses}/{Sequence.Count}";
-
-    public bool IsJoystickEvent()
-    {
-        if (PrevDirection != Direction)
-        {
-            PrevDirection = Direction;
-            JoystickRepetitions = 0;
-            return false;
-        }
-        else JoystickRepetitions++;
-        return JoystickRepetitions < 5;
-    }
 
     public void ResetProgress()
     {
         ResetJoystickData();
 
         Direction = Direction.Error;
-        CorrectGuesses = 0;
         InputType = InputType.Error;
+        CorrectGuesses = 0;
     }
 
     public void FullReset()
     {
         Sequence.Clear();
-        IgnoreInput = true;
+        IsStarted = false;
         ResetProgress();
     }
 
@@ -53,5 +40,6 @@ internal class GameState
     {
         JoystickRepetitions = 0;
         PrevDirection = Direction.Error;
+        PrevInputType = InputType.Error;
     }
 }
