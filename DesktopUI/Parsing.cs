@@ -8,8 +8,8 @@ internal static class Parsing
         {
             int delta = 200;
             string[] words = input.Split(',');
-            int x = int.Parse(words[1]);
-            int y = int.Parse(words[2]);
+            int x = int.Parse(words[0]);
+            int y = int.Parse(words[1]);
             if ((x < (2000 + delta) && (x > (2000 - delta)) && (y < delta)))
             {
                 return Direction.Down;

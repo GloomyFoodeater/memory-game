@@ -100,7 +100,10 @@ public partial class MainForm : Form
             using var port = new SerialPort(portName, baudRate);
             port.Open();
             InvokeSetEnable(true, StartButton, MaxTactsEdit);
-            bool mustDiscard = true;
+            var mustDiscard = true;
+            var prevDirection = Direction.Error;
+            var repeatCount = 0;
+
             while (port.IsOpen)
             {
                 if (_gameState.IsStarted)
@@ -117,7 +120,21 @@ public partial class MainForm : Form
                     (_gameState.Direction, _gameState.InputType) = ParseMessage(message);
 
                     if (_gameState.Direction == Direction.Error || _gameState.InputType == InputType.Error) continue;
-                    if (_gameState.InputType == InputType.Joystick) continue;
+                    if (_gameState.InputType == InputType.Joystick)
+                    {
+                        if (prevDirection != _gameState.Direction)
+                        {
+                            prevDirection = _gameState.Direction;
+                            repeatCount = 0;
+                        }
+                        else repeatCount++;
+
+                        if (repeatCount < 5) continue;
+
+                        prevDirection = Direction.Error;
+                        repeatCount = 0;
+                    }
+
 
                     if (_gameState.Direction == _gameState.Sequence[_gameState.CorrectGuesses])
                     {

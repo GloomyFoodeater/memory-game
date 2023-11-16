@@ -11,9 +11,6 @@ internal class GameState
     public int CorrectGuesses;
     public Direction Direction;
     public InputType InputType;
-    public Direction PrevDirection;
-    public InputType PrevInputType;
-    public int JoystickRepetitions;
     public bool IsStarted;
 
     public bool IsWon => CorrectGuesses == Sequence.Count;
@@ -22,8 +19,6 @@ internal class GameState
 
     public void ResetProgress()
     {
-        ResetJoystickData();
-
         Direction = Direction.Error;
         InputType = InputType.Error;
         CorrectGuesses = 0;
@@ -34,12 +29,5 @@ internal class GameState
         Sequence.Clear();
         IsStarted = false;
         ResetProgress();
-    }
-
-    public void ResetJoystickData()
-    {
-        JoystickRepetitions = 0;
-        PrevDirection = Direction.Error;
-        PrevInputType = InputType.Error;
     }
 }
