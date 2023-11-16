@@ -130,7 +130,10 @@
             Controls.Add(MaxTactsEdit);
             Controls.Add(StartButton);
             Controls.Add(DirectionPictureBox);
+            MaximumSize = new Size(800, 600);
+            MinimumSize = new Size(800, 600);
             Name = "MainForm";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Lab3";
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).EndInit();
             ((System.ComponentModel.ISupportInitialize)MaxTactsEdit).EndInit();
