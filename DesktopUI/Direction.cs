@@ -6,5 +6,6 @@ enum Direction
     Down,
     Left,
     Right,
+
     Error
 }
