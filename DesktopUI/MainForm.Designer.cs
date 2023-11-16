@@ -34,7 +34,7 @@
             RepeatButton = new Button();
             PortSelector = new ComboBox();
             label1 = new Label();
-            TactProgressLabel = new Label();
+            ProgressLabel = new Label();
             RefreshButton = new Button();
             ConnectButton = new Button();
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).BeginInit();
@@ -100,15 +100,14 @@
             label1.TabIndex = 5;
             label1.Text = "Ports";
             // 
-            // TactProgressLabel
+            // ProgressLabel
             // 
-            TactProgressLabel.Font = new Font("Segoe UI", 20F, FontStyle.Bold, GraphicsUnit.Point);
-            TactProgressLabel.Location = new Point(178, 399);
-            TactProgressLabel.Name = "TactProgressLabel";
-            TactProgressLabel.Size = new Size(100, 100);
-            TactProgressLabel.TabIndex = 6;
-            TactProgressLabel.Text = "??/??";
-            TactProgressLabel.TextAlign = ContentAlignment.MiddleCenter;
+            ProgressLabel.Font = new Font("Segoe UI", 20F, FontStyle.Bold, GraphicsUnit.Point);
+            ProgressLabel.Location = new Point(178, 399);
+            ProgressLabel.Name = "ProgressLabel";
+            ProgressLabel.Size = new Size(100, 100);
+            ProgressLabel.TabIndex = 6;
+            ProgressLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // RefreshButton
             // 
@@ -137,7 +136,7 @@
             ClientSize = new Size(784, 561);
             Controls.Add(ConnectButton);
             Controls.Add(RefreshButton);
-            Controls.Add(TactProgressLabel);
+            Controls.Add(ProgressLabel);
             Controls.Add(label1);
             Controls.Add(PortSelector);
             Controls.Add(RepeatButton);
@@ -160,7 +159,7 @@
         private Button RepeatButton;
         private ComboBox PortSelector;
         private Label label1;
-        private Label TactProgressLabel;
+        private Label ProgressLabel;
         private Button RefreshButton;
         private Button ConnectButton;
     }
