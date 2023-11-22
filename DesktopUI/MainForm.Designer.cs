@@ -36,13 +36,17 @@
             ProgressLabel = new Label();
             RefreshButton = new Button();
             ConnectButton = new Button();
+            panel1 = new Panel();
+            panel2 = new Panel();
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)MaxTactsEdit).BeginInit();
+            panel1.SuspendLayout();
+            panel2.SuspendLayout();
             SuspendLayout();
             // 
             // DirectionPictureBox
             // 
-            DirectionPictureBox.Location = new Point(150, 0);
+            DirectionPictureBox.Location = new Point(147, 0);
             DirectionPictureBox.Name = "DirectionPictureBox";
             DirectionPictureBox.Size = new Size(500, 375);
             DirectionPictureBox.TabIndex = 0;
@@ -50,7 +54,7 @@
             // 
             // StartButton
             // 
-            StartButton.Location = new Point(326, 381);
+            StartButton.Location = new Point(314, 399);
             StartButton.Name = "StartButton";
             StartButton.Size = new Size(150, 50);
             StartButton.TabIndex = 1;
@@ -61,20 +65,19 @@
             // MaxTactsEdit
             // 
             MaxTactsEdit.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            MaxTactsEdit.Location = new Point(326, 437);
+            MaxTactsEdit.Location = new Point(314, 465);
             MaxTactsEdit.Maximum = new decimal(new int[] { 15, 0, 0, 0 });
             MaxTactsEdit.Minimum = new decimal(new int[] { 3, 0, 0, 0 });
             MaxTactsEdit.Name = "MaxTactsEdit";
             MaxTactsEdit.Size = new Size(150, 29);
             MaxTactsEdit.TabIndex = 2;
             MaxTactsEdit.Value = new decimal(new int[] { 3, 0, 0, 0 });
-            MaxTactsEdit.ValueChanged += MaxTactsEdit_ValueChanged;
             // 
             // PortSelector
             // 
             PortSelector.DropDownStyle = ComboBoxStyle.DropDownList;
             PortSelector.FormattingEnabled = true;
-            PortSelector.Location = new Point(529, 408);
+            PortSelector.Location = new Point(324, 209);
             PortSelector.Name = "PortSelector";
             PortSelector.Size = new Size(121, 23);
             PortSelector.TabIndex = 4;
@@ -82,7 +85,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(574, 388);
+            label1.Location = new Point(369, 189);
             label1.Name = "label1";
             label1.Size = new Size(34, 15);
             label1.TabIndex = 5;
@@ -99,7 +102,7 @@
             // 
             // RefreshButton
             // 
-            RefreshButton.Location = new Point(656, 408);
+            RefreshButton.Location = new Point(460, 208);
             RefreshButton.Name = "RefreshButton";
             RefreshButton.Size = new Size(75, 23);
             RefreshButton.TabIndex = 7;
@@ -110,7 +113,7 @@
             // ConnectButton
             // 
             ConnectButton.Enabled = false;
-            ConnectButton.Location = new Point(553, 443);
+            ConnectButton.Location = new Point(348, 244);
             ConnectButton.Name = "ConnectButton";
             ConnectButton.Size = new Size(75, 23);
             ConnectButton.TabIndex = 8;
@@ -118,28 +121,50 @@
             ConnectButton.UseVisualStyleBackColor = true;
             ConnectButton.Click += ConnectButton_Click;
             // 
+            // panel1
+            // 
+            panel1.Controls.Add(PortSelector);
+            panel1.Controls.Add(label1);
+            panel1.Controls.Add(ConnectButton);
+            panel1.Controls.Add(RefreshButton);
+            panel1.Dock = DockStyle.Fill;
+            panel1.Location = new Point(0, 0);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(784, 561);
+            panel1.TabIndex = 9;
+            panel1.Visible = false;
+            // 
+            // panel2
+            // 
+            panel2.Controls.Add(MaxTactsEdit);
+            panel2.Controls.Add(DirectionPictureBox);
+            panel2.Controls.Add(StartButton);
+            panel2.Controls.Add(panel1);
+            panel2.Dock = DockStyle.Fill;
+            panel2.Location = new Point(0, 0);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(784, 561);
+            panel2.TabIndex = 10;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(784, 561);
-            Controls.Add(ConnectButton);
-            Controls.Add(RefreshButton);
             Controls.Add(ProgressLabel);
-            Controls.Add(label1);
-            Controls.Add(PortSelector);
-            Controls.Add(MaxTactsEdit);
-            Controls.Add(StartButton);
-            Controls.Add(DirectionPictureBox);
+            Controls.Add(panel2);
             MaximumSize = new Size(800, 600);
             MinimumSize = new Size(800, 600);
             Name = "MainForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Lab3";
+            KeyUp += MainForm_KeyPress;
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).EndInit();
             ((System.ComponentModel.ISupportInitialize)MaxTactsEdit).EndInit();
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
+            panel2.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -152,5 +177,7 @@
         private Label ProgressLabel;
         private Button RefreshButton;
         private Button ConnectButton;
+        private Panel panel1;
+        private Panel panel2;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace DesktopUI;
+﻿using DesktopUI.Core.Model;
+
+namespace DesktopUI;
 
 internal static class ControlUtils
 {

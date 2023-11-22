@@ -1,35 +1,30 @@
+using DesktopUI.Core;
+using DesktopUI.Core.Model;
 using System.IO.Ports;
-
-using static DesktopUI.Parsing;
 using static DesktopUI.ControlUtils;
 
 namespace DesktopUI;
 
 public partial class MainForm : Form
 {
-    private readonly GameState _gameState = new();
-    private readonly Random _random = new();
-    private const int _delay = 1000;
+    private readonly MemoryGame _game = new();
+    bool isGenerated = false;
+    bool isKeyboard = true;
 
     public MainForm()
     {
         InitializeComponent();
 
-        // TODO: Uncomment
-        // Must be unabled until connected
-        SetEnable(false, StartButton, MaxTactsEdit);
+        _game.OnGenerated += OnGenerated;
+        _game.OnCorrectGuess += Output;
+        _game.OnFailure += OnFailure;
+        _game.OnSuccess += OnSuccess;
 
+        Task.Factory.StartNew(_game.Run);
         ListPorts();
     }
 
     #region Helpers
-
-    private void Output()
-    {
-        DirectionPictureBox.InvokeSetImage(_gameState.Direction);
-        ProgressLabel.InvokeSetText(_gameState.ProgressString);
-    }
-
     private void ListPorts()
     {
         var ports = SerialPort.GetPortNames();
@@ -43,22 +38,43 @@ public partial class MainForm : Form
         }
     }
 
-    private void StartSlideShow()
+    private void OnGenerated(Direction[] sequence)
     {
-        _gameState.ResetProgress();
-        Output();
+        isGenerated = false;
 
-        foreach (var dir in _gameState.Sequence)
+        Output(Direction.Error, 0, sequence.Length);
+
+        for (int i = 0; i < sequence.Length; i++)
         {
-            _gameState.CorrectGuesses++;
-            _gameState.Direction = dir;
-            Output();
-            Thread.Sleep(_delay);
+            Output(sequence[i], i + 1, sequence.Length);
+            Thread.Sleep(1000);
         }
 
-        _gameState.ResetProgress();
-        Output();
+        Output(Direction.Error, 0, sequence.Length);
 
+        isGenerated = true;
+    }
+
+    private void Output(Direction dir, int idx, int length)
+    {
+        DirectionPictureBox.InvokeSetImage(dir);
+        var progressString = length > 0 ? $"{idx}/{length}" : "";
+        ProgressLabel.InvokeSetText(progressString);
+    }
+
+    private void OnFailure()
+    {
+        MessageBox.Show("Try again!", "Failure");
+        Output(Direction.Error, default, default);
+
+        InvokeSetEnable(true, MaxTactsEdit, StartButton);
+    }
+
+    private void OnSuccess()
+    {
+        MessageBox.Show("Yay!", "Success!");
+        Output(Direction.Error, default, default);
+        InvokeSetEnable(true, MaxTactsEdit, StartButton);
     }
 
     #endregion
@@ -67,112 +83,38 @@ public partial class MainForm : Form
 
     private void StartButton_Click(object sender, EventArgs e)
     {
-        SetEnable(false, StartButton, MaxTactsEdit);
-        _gameState.FullReset();
+        var size = (int)MaxTactsEdit.Value;
+        _game.SignalGeneration(size);
+        SetEnable(false, MaxTactsEdit, StartButton);
+    }
 
+    private void RefreshButton_Click(object sender, EventArgs e)
+    {
+        ListPorts();
+    }
+
+    private void ConnectButton_Click(object sender, EventArgs e)
+    {
         Task.Factory.StartNew(() =>
         {
-            var sequenceLength = (int)MaxTactsEdit.Value;
-            var max = Enum.GetValues(typeof(Direction)).Length - 1; // -1 for unknown
-            for (int i = 0; i < sequenceLength; i++)
-                _gameState.Sequence.Add((Direction)_random.Next(0, max));
 
-            StartSlideShow();
-
-            InvokeSetEnable(true, StartButton, MaxTactsEdit);
-            _gameState.IsStarted = true;
         });
     }
 
-    private void MaxTactsEdit_ValueChanged(object sender, EventArgs e) => _gameState.FullReset();
-
-    private void RefreshButton_Click(object sender, EventArgs e) => ListPorts();
-
-    private void ConnectButton_Click(object sender, EventArgs e) => Task.Factory.StartNew(() =>
+    private void MainForm_KeyPress(object sender, KeyEventArgs e)
     {
-        InvokeSetEnable(false, PortSelector, ConnectButton, RefreshButton);
+        if (!isGenerated || !isKeyboard) return;
 
-        var portName = PortSelector.Invoke(() => PortSelector.Items[PortSelector.SelectedIndex].ToString());
-        var baudRate = 115200;
-
-        try
+        switch (e.KeyCode)
         {
-            using var port = new SerialPort(portName, baudRate);
-            port.Open();
-            InvokeSetEnable(true, StartButton, MaxTactsEdit);
-            var mustDiscard = true;
-            var prevDirection = Direction.Error;
-            var repeatCount = 0;
-
-            while (port.IsOpen)
-            {
-                if (_gameState.IsStarted)
-                {
-                    if (mustDiscard)
-                    {
-                        port.DiscardOutBuffer();
-                        port.DiscardInBuffer();
-                        mustDiscard = false;
-                        InvokeSetEnable(false, StartButton, MaxTactsEdit);
-                    }
-
-                    var message = port.ReadLine();
-                    (_gameState.Direction, _gameState.InputType) = ParseMessage(message);
-
-                    if (_gameState.Direction == Direction.Error || _gameState.InputType == InputType.Error) continue;
-                    if (_gameState.InputType == InputType.Joystick)
-                    {
-                        if (prevDirection != _gameState.Direction)
-                        {
-                            prevDirection = _gameState.Direction;
-                            repeatCount = 0;
-                        }
-                        else repeatCount++;
-
-                        if (repeatCount < 5) continue;
-
-                        prevDirection = Direction.Error;
-                        repeatCount = 0;
-                    }
-
-
-                    if (_gameState.Direction == _gameState.Sequence[_gameState.CorrectGuesses])
-                    {
-                        _gameState.CorrectGuesses++;
-                        Output();
-
-                        if (_gameState.IsWon)
-                        {
-                            MessageBox.Show($"Won: {_gameState.ProgressString}!", "Success");
-                            _gameState.FullReset();
-                            Output();
-                            mustDiscard = true;
-                            InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Try again", "Failure");
-                        _gameState.FullReset();
-                        Output();
-                        mustDiscard = true;
-                        InvokeSetEnable(true, StartButton, PortSelector, MaxTactsEdit);
-                    }
-                }
-            }
+            case Keys.W: _game.SignalInput(Direction.Up); break;
+            case Keys.A: _game.SignalInput(Direction.Left); break;
+            case Keys.S: _game.SignalInput(Direction.Down); break;
+            case Keys.D: _game.SignalInput(Direction.Right); break;
+            default: break;
         }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message, $"Error: {ex.GetType().Name}");
-        }
+        #endregion
 
-        _gameState.FullReset();
 
-        InvokeSetEnable(false, StartButton, MaxTactsEdit);
-
-        InvokeSetEnable(true, PortSelector, ConnectButton, RefreshButton);
-    });
-
-    #endregion
-
+    }
 }
