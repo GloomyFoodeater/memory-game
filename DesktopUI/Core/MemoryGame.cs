@@ -9,23 +9,38 @@ public class MemoryGame
     private int _currentIdx;
     private Direction _currentDir;
 
+    public event Action? OnReset;
     public event Action<Direction[]>? OnGenerated;
     public event Action<Direction, int, int>? OnCorrectGuess;
     public event Action? OnFailure; 
     public event Action? OnSuccess;
 
-    private GameState _state = GameState.Idle;
+    private GameState _state;
     private readonly Dictionary<GameState, Action> _transitionTable;
 
-    public MemoryGame() => _transitionTable = new()
+    public MemoryGame()
     {
-        { GameState.Idle,           Idle },
-        { GameState.Generate,       GenerateSequence },
-        { GameState.PendingInput,   ProcessInput },
-        { GameState.CorrectGuess,   ProcessCorrectGuess },
-        { GameState.Success,        ProcessSuccess },
-        { GameState.Failure,        ProcessFailure },
-    };
+        SignalReset();
+
+        _transitionTable = new()
+        {
+            { GameState.Idle,           Idle },
+            { GameState.Generate,       GenerateSequence },
+            { GameState.PendingInput,   ProcessInput },
+            { GameState.CorrectGuess,   ProcessCorrectGuess },
+            { GameState.Success,        ProcessSuccess },
+            { GameState.Failure,        ProcessFailure },
+        };
+    }
+
+    public void SignalReset()
+    {
+        _requestedLength = 0;
+        _currentIdx = 0;
+        _currentDir = Direction.Error;
+        _state = GameState.Idle;
+        OnReset?.Invoke();
+    }
 
     public void SignalGeneration(int size)
     {

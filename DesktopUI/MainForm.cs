@@ -8,17 +8,20 @@ namespace DesktopUI;
 public partial class MainForm : Form
 {
     private readonly MemoryGame _game = new();
-    bool isGenerated = false;
-    bool isKeyboard = true;
+    private bool isGenerated = false;
+    private const bool isKeyboard = true;
 
     public MainForm()
     {
         InitializeComponent();
 
+        _game.OnReset += OnReset;
         _game.OnGenerated += OnGenerated;
         _game.OnCorrectGuess += Output;
         _game.OnFailure += OnFailure;
+        _game.OnFailure += OnReset;
         _game.OnSuccess += OnSuccess;
+        _game.OnSuccess += OnReset;
 
         Task.Factory.StartNew(_game.Run);
         ListPorts();
@@ -38,10 +41,16 @@ public partial class MainForm : Form
         }
     }
 
-    private void OnGenerated(Direction[] sequence)
+    private void OnReset()
     {
         isGenerated = false;
+        Output(Direction.Error, default, default);
 
+        InvokeSetEnable(true, MaxTactsEdit, StartButton);
+    }
+
+    private void OnGenerated(Direction[] sequence)
+    {
         Output(Direction.Error, 0, sequence.Length);
 
         for (int i = 0; i < sequence.Length; i++)
@@ -65,16 +74,11 @@ public partial class MainForm : Form
     private void OnFailure()
     {
         MessageBox.Show("Try again!", "Failure");
-        Output(Direction.Error, default, default);
-
-        InvokeSetEnable(true, MaxTactsEdit, StartButton);
     }
 
     private void OnSuccess()
     {
         MessageBox.Show("Yay!", "Success!");
-        Output(Direction.Error, default, default);
-        InvokeSetEnable(true, MaxTactsEdit, StartButton);
     }
 
     #endregion
@@ -95,10 +99,7 @@ public partial class MainForm : Form
 
     private void ConnectButton_Click(object sender, EventArgs e)
     {
-        Task.Factory.StartNew(() =>
-        {
-
-        });
+        if (isKeyboard) return;
     }
 
     private void MainForm_KeyPress(object sender, KeyEventArgs e)
@@ -111,6 +112,7 @@ public partial class MainForm : Form
             case Keys.A: _game.SignalInput(Direction.Left); break;
             case Keys.S: _game.SignalInput(Direction.Down); break;
             case Keys.D: _game.SignalInput(Direction.Right); break;
+            case Keys.Escape: _game.SignalReset(); break;
             default: break;
         }
     }
