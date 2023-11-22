@@ -113,8 +113,7 @@ public partial class MainForm : Form
             case Keys.D: _game.SignalInput(Direction.Right); break;
             default: break;
         }
-        #endregion
-
-
     }
+
+    #endregion
 }
