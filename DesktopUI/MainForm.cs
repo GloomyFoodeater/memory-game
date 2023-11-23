@@ -7,13 +7,20 @@ namespace DesktopUI;
 
 public partial class MainForm : Form
 {
+    const int jsDelta = 100;
+    const int jsMax = 4096;
+    const int jsCenter = jsMax / 2;
+    const int baudRate = 115200;
+
     private readonly MemoryGame _game = new();
     private bool isGenerated = false;
-    private const bool isKeyboard = true;
+    private bool isKeyboard = false;
 
     public MainForm()
     {
         InitializeComponent();
+
+        ConnectionContainer.Visible = !isKeyboard;
 
         _game.OnReset += OnReset;
         _game.OnGenerated += OnGenerated;
@@ -34,11 +41,8 @@ public partial class MainForm : Form
         PortSelector.Items.Clear();
         PortSelector.Items.AddRange(ports);
 
-        if (ports.Any())
-        {
-            PortSelector.SelectedIndex = 0;
-            ConnectButton.Enabled = true;
-        }
+        ConnectButton.Enabled = ports.Any();
+        if (ports.Any()) PortSelector.SelectedIndex = 0;
     }
 
     private void OnReset()
@@ -81,6 +85,81 @@ public partial class MainForm : Form
         MessageBox.Show("Yay!", "Success!");
     }
 
+    void OnJoystickMessage(string message, ref bool wasCenterDetected)
+    {
+        string[] words = message[3..].Split(',');
+        int x = int.Parse(words[0]);
+        int y = int.Parse(words[1]);
+
+        var isCenter = Math.Abs(x - jsCenter) < jsDelta && Math.Abs(y - jsCenter) < jsDelta;
+        if (isCenter)
+        {
+            wasCenterDetected = true;
+            return;
+        }
+
+        Direction dir;
+        if (y < jsDelta)
+            dir = Direction.Down;
+        else if (x < jsDelta)
+            dir = Direction.Left;
+        else if (y > jsMax - jsDelta)
+            dir = Direction.Up;
+        else if (x > jsMax - jsDelta)
+            dir = Direction.Right;
+        else
+            return;
+
+        if (wasCenterDetected)
+        {
+            wasCenterDetected = false;
+            _game.SignalInput(dir);
+        }
+    }
+
+    void OnButtonMessage(string message)
+    {
+        var dir = message[3..] switch
+        {
+            "D" => Direction.Down,
+            "U" => Direction.Up,
+            "R" => Direction.Right,
+            "L" => Direction.Left,
+            _ => Direction.Error
+        };
+        _game.SignalInput(dir);
+    }
+
+    private void ConnectionTask(string portName)
+    {
+
+        bool wasJsCenterDetected = false;
+
+        try
+        {
+            using var port = new SerialPort(portName, baudRate);
+            port.Open();
+            ConnectionContainer.Invoke(() => ConnectionContainer.Visible = false);
+            while (port.IsOpen)
+            {
+                if (!isGenerated) continue;
+                var message = port.ReadLine();
+                switch (message[..2])
+                {
+                    case "js": OnJoystickMessage(message, ref wasJsCenterDetected); break;
+                    case "bt": OnButtonMessage(message); break;
+                    default: throw new IOException();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show(e.Message, "Error");
+            ConnectionContainer.Invoke(() => ConnectionContainer.Visible = true);
+            _game.SignalReset();
+        }
+    }
+
     #endregion
 
     #region Handlers
@@ -99,7 +178,16 @@ public partial class MainForm : Form
 
     private void ConnectButton_Click(object sender, EventArgs e)
     {
-        if (isKeyboard) return;
+        try
+        {
+            isKeyboard = false;
+            var portName = PortSelector.Items[PortSelector.SelectedIndex].ToString();
+            Task.Factory.StartNew(() => ConnectionTask(portName));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Error");
+        }
     }
 
     private void MainForm_KeyPress(object sender, KeyEventArgs e)
@@ -112,10 +200,20 @@ public partial class MainForm : Form
             case Keys.A: _game.SignalInput(Direction.Left); break;
             case Keys.S: _game.SignalInput(Direction.Down); break;
             case Keys.D: _game.SignalInput(Direction.Right); break;
-            case Keys.Escape: _game.SignalReset(); break;
+            case Keys.Escape:
+                {
+                    _game.SignalReset();
+                    ConnectionContainer.Visible = true;
+                }
+                break;
             default: break;
         }
     }
 
+    private void button1_Click(object sender, EventArgs e)
+    {
+        isKeyboard = true;
+        ConnectionContainer.Visible = false;
+    }
     #endregion
 }

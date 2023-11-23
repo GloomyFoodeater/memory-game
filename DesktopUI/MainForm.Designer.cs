@@ -36,11 +36,12 @@
             ProgressLabel = new Label();
             RefreshButton = new Button();
             ConnectButton = new Button();
-            panel1 = new Panel();
+            ConnectionContainer = new Panel();
             panel2 = new Panel();
+            button1 = new Button();
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)MaxTactsEdit).BeginInit();
-            panel1.SuspendLayout();
+            ConnectionContainer.SuspendLayout();
             panel2.SuspendLayout();
             SuspendLayout();
             // 
@@ -121,30 +122,41 @@
             ConnectButton.UseVisualStyleBackColor = true;
             ConnectButton.Click += ConnectButton_Click;
             // 
-            // panel1
+            // ConnectionContainer
             // 
-            panel1.Controls.Add(PortSelector);
-            panel1.Controls.Add(label1);
-            panel1.Controls.Add(ConnectButton);
-            panel1.Controls.Add(RefreshButton);
-            panel1.Dock = DockStyle.Fill;
-            panel1.Location = new Point(0, 0);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(784, 561);
-            panel1.TabIndex = 9;
-            panel1.Visible = false;
+            ConnectionContainer.Controls.Add(button1);
+            ConnectionContainer.Controls.Add(PortSelector);
+            ConnectionContainer.Controls.Add(label1);
+            ConnectionContainer.Controls.Add(ConnectButton);
+            ConnectionContainer.Controls.Add(RefreshButton);
+            ConnectionContainer.Dock = DockStyle.Fill;
+            ConnectionContainer.Location = new Point(0, 0);
+            ConnectionContainer.Name = "ConnectionContainer";
+            ConnectionContainer.Size = new Size(784, 561);
+            ConnectionContainer.TabIndex = 9;
+            ConnectionContainer.Visible = false;
             // 
             // panel2
             // 
+            panel2.Controls.Add(ConnectionContainer);
             panel2.Controls.Add(MaxTactsEdit);
             panel2.Controls.Add(DirectionPictureBox);
             panel2.Controls.Add(StartButton);
-            panel2.Controls.Add(panel1);
             panel2.Dock = DockStyle.Fill;
             panel2.Location = new Point(0, 0);
             panel2.Name = "panel2";
             panel2.Size = new Size(784, 561);
             panel2.TabIndex = 10;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(348, 287);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 9;
+            button1.Text = "WASD";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // MainForm
             // 
@@ -161,8 +173,8 @@
             KeyUp += MainForm_KeyPress;
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).EndInit();
             ((System.ComponentModel.ISupportInitialize)MaxTactsEdit).EndInit();
-            panel1.ResumeLayout(false);
-            panel1.PerformLayout();
+            ConnectionContainer.ResumeLayout(false);
+            ConnectionContainer.PerformLayout();
             panel2.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -177,7 +189,8 @@
         private Label ProgressLabel;
         private Button RefreshButton;
         private Button ConnectButton;
-        private Panel panel1;
+        private Panel ConnectionContainer;
         private Panel panel2;
+        private Button button1;
     }
 }
