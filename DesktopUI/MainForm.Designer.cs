@@ -37,8 +37,8 @@
             RefreshButton = new Button();
             ConnectButton = new Button();
             ConnectionContainer = new Panel();
-            panel2 = new Panel();
             button1 = new Button();
+            panel2 = new Panel();
             ((System.ComponentModel.ISupportInitialize)DirectionPictureBox).BeginInit();
             ((System.ComponentModel.ISupportInitialize)MaxTactsEdit).BeginInit();
             ConnectionContainer.SuspendLayout();
@@ -136,6 +136,16 @@
             ConnectionContainer.TabIndex = 9;
             ConnectionContainer.Visible = false;
             // 
+            // button1
+            // 
+            button1.Location = new Point(348, 287);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 9;
+            button1.Text = "WASD";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += WasdButton;
+            // 
             // panel2
             // 
             panel2.Controls.Add(ConnectionContainer);
@@ -147,16 +157,6 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(784, 561);
             panel2.TabIndex = 10;
-            // 
-            // button1
-            // 
-            button1.Location = new Point(348, 287);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 9;
-            button1.Text = "WASD";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
             // 
             // MainForm
             // 

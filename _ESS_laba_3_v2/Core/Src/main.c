@@ -32,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BT_MIN_DELAY 500
+#define BT_MIN_DELAY 300
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -64,11 +64,6 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-long long_abs(long x)
-{
-	return x < 0 ? -x : x;
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 		uint32_t curTime = HAL_GetTick();
@@ -143,7 +138,7 @@ int main(void)
 		char message[100];
 		snprintf(message, 100, "js:%lu,%lu\n", x, y);
 		HAL_UART_Transmit(&huart2, (uint8_t*)message, strlen(message), HAL_MAX_DELAY);
-		// HAL_Delay(500);
+		HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

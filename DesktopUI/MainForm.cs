@@ -9,7 +9,7 @@ public partial class MainForm : Form
 {
     const int jsDelta = 100;
     const int jsMax = 4096;
-    const int jsCenter = jsMax / 2;
+    const int jsCenter = 3000;
     const int baudRate = 115200;
 
     private readonly MemoryGame _game = new();
@@ -87,9 +87,18 @@ public partial class MainForm : Form
 
     void OnJoystickMessage(string message, ref bool wasCenterDetected)
     {
+
         string[] words = message[3..].Split(',');
-        int x = int.Parse(words[0]);
-        int y = int.Parse(words[1]);
+        int x = 0, y = 0;
+        try
+        {
+            x = int.Parse(words[0]);
+            y = int.Parse(words[1]);
+        }
+        catch
+        {
+            return;
+        }
 
         var isCenter = Math.Abs(x - jsCenter) < jsDelta && Math.Abs(y - jsCenter) < jsDelta;
         if (isCenter)
@@ -115,6 +124,8 @@ public partial class MainForm : Form
             wasCenterDetected = false;
             _game.SignalInput(dir);
         }
+
+
     }
 
     void OnButtonMessage(string message)
@@ -140,7 +151,7 @@ public partial class MainForm : Form
             using var port = new SerialPort(portName, baudRate);
             port.Open();
             ConnectionContainer.Invoke(() => ConnectionContainer.Visible = false);
-            while (port.IsOpen)
+            while (true)
             {
                 if (!isGenerated) continue;
                 var message = port.ReadLine();
@@ -148,7 +159,7 @@ public partial class MainForm : Form
                 {
                     case "js": OnJoystickMessage(message, ref wasJsCenterDetected); break;
                     case "bt": OnButtonMessage(message); break;
-                    default: throw new IOException();
+                        //default: throw new IOException();
                 }
             }
         }
@@ -193,7 +204,6 @@ public partial class MainForm : Form
     private void MainForm_KeyPress(object sender, KeyEventArgs e)
     {
         if (!isGenerated || !isKeyboard) return;
-
         switch (e.KeyCode)
         {
             case Keys.W: _game.SignalInput(Direction.Up); break;
@@ -210,7 +220,7 @@ public partial class MainForm : Form
         }
     }
 
-    private void button1_Click(object sender, EventArgs e)
+    private void WasdButton(object sender, EventArgs e)
     {
         isKeyboard = true;
         ConnectionContainer.Visible = false;
